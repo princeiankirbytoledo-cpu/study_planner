@@ -1,5 +1,6 @@
 package ph.edu.comteq.studyplaner.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -35,24 +37,61 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Calendar
+
+// Helper function to get time-of-day greeting
+private fun getGreetingMessage(): String {
+    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    return when (hour) {
+        in 5..11 -> "Good morning, Prince Ian! 👋"
+        in 12..16 -> "Good afternoon, Prince Ian! 👋"
+        else -> "Good evening, Prince Ian! 👋"
+    }
+}
+
+data class HomeSubjectItem(
+    val id: String,
+    val name: String,
+    val icon: ImageVector,
+    val iconBackgroundColor: Color,
+    val iconTint: Color
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onAddSubjectClick: () -> Unit = { }
+    tasks: List<TaskItemUi> = emptyList(),
+    onAddSubjectClick: () -> Unit = { },
+    onSubjectClick: (String) -> Unit = { }
 ) {
+    val context = LocalContext.current
     val darkNavy = Color(0xFF0D0D5C)
     val headerGray = Color(0xFF424242)
     val buttonGreen = Color(0xFF2E7D32)
     val backgroundColor = Color(0xFFF8F9FA)
+
+    // Dynamic Greeting Function based on time of day
+    val greetingText = remember { getGreetingMessage() }
+
+    // Initial list of subjects
+    val initialSubjects = listOf(
+        HomeSubjectItem("1", "Mathematics", Icons.Default.Calculate, Color(0xFFF0E6FF), Color(0xFF7C4DFF)),
+        HomeSubjectItem("2", "Science", Icons.Default.Science, Color(0xFFE8F5E9), Color(0xFF2E7D32)),
+        HomeSubjectItem("3", "English", Icons.AutoMirrored.Filled.MenuBook, Color(0xFFFFF3E0), Color(0xFFEF6C00)),
+        HomeSubjectItem("4", "Programming", Icons.Default.Code, Color(0xFFE3F2FD), Color(0xFF1565C0))
+    )
+    val subjectsList = remember { initialSubjects.toMutableStateList() }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -89,7 +128,11 @@ fun HomeScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
+                    IconButton(
+                        onClick = {
+                            Toast.makeText(context, "You have no new notifications", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Notifications,
                             contentDescription = "Notification",
@@ -109,7 +152,7 @@ fun HomeScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            // Greeting section
+            // Dynamic Greeting section
             item {
                 Column(
                     modifier = Modifier
@@ -117,14 +160,14 @@ fun HomeScreen(
                         .padding(horizontal = 20.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "Good morning, Prince Ian! 👋",
+                        text = greetingText,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = darkNavy
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Here are your subjects",
+                        text = "Here are your subjects (${subjectsList.size})",
                         fontSize = 15.sp,
                         color = Color.Gray
                     )
@@ -132,51 +175,19 @@ fun HomeScreen(
                 }
             }
 
-            // Subject 1: Mathematics
-            item {
-                SubjectCard(
-                    icon = Icons.Default.Calculate,
-                    iconBackgroundColor = Color(0xFFF0E6FF),
-                    iconTint = Color(0xFF7C4DFF),
-                    subjectName = "Mathematics",
-                    taskCount = 3,
-                    onClick = { }
-                )
-            }
+            // Subject Cards List (Task count computed dynamically from shared tasks list)
+            items(subjectsList, key = { it.id }) { subject ->
+                val dynamicCount = tasks.count { it.subject.equals(subject.name, ignoreCase = true) }
 
-            // Subject 2: Science
-            item {
                 SubjectCard(
-                    icon = Icons.Default.Science,
-                    iconBackgroundColor = Color(0xFFE8F5E9),
-                    iconTint = Color(0xFF2E7D32),
-                    subjectName = "Science",
-                    taskCount = 4,
-                    onClick = { }
-                )
-            }
-
-            // Subject 3: English
-            item {
-                SubjectCard(
-                    icon = Icons.AutoMirrored.Filled.MenuBook,
-                    iconBackgroundColor = Color(0xFFFFF3E0),
-                    iconTint = Color(0xFFEF6C00),
-                    subjectName = "English",
-                    taskCount = 2,
-                    onClick = { }
-                )
-            }
-
-            // Subject 4: Programming
-            item {
-                SubjectCard(
-                    icon = Icons.Default.Code,
-                    iconBackgroundColor = Color(0xFFE3F2FD),
-                    iconTint = Color(0xFF1565C0),
-                    subjectName = "Programming",
-                    taskCount = 5,
-                    onClick = { }
+                    icon = subject.icon,
+                    iconBackgroundColor = subject.iconBackgroundColor,
+                    iconTint = subject.iconTint,
+                    subjectName = subject.name,
+                    taskCount = dynamicCount,
+                    onClick = {
+                        onSubjectClick(subject.name)
+                    }
                 )
             }
 

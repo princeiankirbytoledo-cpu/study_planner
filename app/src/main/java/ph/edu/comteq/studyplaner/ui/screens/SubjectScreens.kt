@@ -136,7 +136,7 @@ fun ManageSubjectCard(
                 )
             }
 
-            // Three-dot options icon (navigates to edit_subject)
+            // Three-dot options icon
             IconButton(onClick = onOptionsClick) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
@@ -150,46 +150,44 @@ fun ManageSubjectCard(
 }
 
 /**
- * SCREEN 1: My Subjects Screen UI
+ * SCREEN 1: My Subjects Screen UI (Static display screen)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubjectManagementScreen(
-    modifier: Modifier = Modifier,
-    onAddSubjectClick: () -> Unit = { },
-    onSubjectClick: () -> Unit = { }
+    modifier: Modifier = Modifier
 ) {
     val headerGray = Color(0xFF424242)
     val buttonGreen = Color(0xFF2E7D32)
     val lightPurple = Color(0xFFF0E6FF)
     val backgroundColor = Color(0xFFF8F9FA)
 
-    // Hardcoded sample subjects data
+    // Hardcoded static sample subjects data
     val sampleSubjects = listOf(
         SubjectItemUi(
             name = "Mathematics",
-            taskCount = 3,
+            taskCount = 0,
             icon = Icons.Default.Calculate,
             iconBackgroundColor = lightPurple,
             iconTint = Color(0xFF7C4DFF)
         ),
         SubjectItemUi(
             name = "Science",
-            taskCount = 4,
+            taskCount = 0,
             icon = Icons.Default.Science,
             iconBackgroundColor = Color(0xFFE8F5E9),
             iconTint = Color(0xFF2E7D32)
         ),
         SubjectItemUi(
             name = "English",
-            taskCount = 2,
+            taskCount = 0,
             icon = Icons.AutoMirrored.Filled.MenuBook,
             iconBackgroundColor = Color(0xFFFFF3E0),
             iconTint = Color(0xFFEF6C00)
         ),
         SubjectItemUi(
             name = "Programming",
-            taskCount = 5,
+            taskCount = 0,
             icon = Icons.Default.Code,
             iconBackgroundColor = Color(0xFFE3F2FD),
             iconTint = Color(0xFF1565C0)
@@ -242,20 +240,20 @@ fun SubjectManagementScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            // Subject Cards List
+            // Static Subject Cards List
             items(sampleSubjects) { subject ->
                 ManageSubjectCard(
                     subject = subject,
-                    onClick = onSubjectClick,
-                    onOptionsClick = onSubjectClick
+                    onClick = { },
+                    onOptionsClick = { }
                 )
             }
 
-            // Add Subject Button
+            // Static Add Subject Button
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
-                    onClick = onAddSubjectClick,
+                    onClick = { },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)

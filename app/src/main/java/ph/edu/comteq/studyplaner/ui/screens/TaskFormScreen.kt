@@ -3,6 +3,7 @@ package ph.edu.comteq.studyplaner.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +42,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -66,8 +73,9 @@ fun FormLabel(text: String) {
  */
 @Composable
 fun PrioritySelector(
-    selectedPriority: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectedPriority: String = "Medium",
+    onPrioritySelected: (String) -> Unit = { }
 ) {
     val priorities = listOf("Low", "Medium", "High")
     val selectedGray = Color(0xFF424242)
@@ -95,7 +103,8 @@ fun PrioritySelector(
                             color = if (isSelected) selectedGray else unselectedBorder
                         ),
                         shape = RoundedCornerShape(22.dp)
-                    ),
+                    )
+                    .clickable { onPrioritySelected(priority) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -192,21 +201,36 @@ fun DeleteConfirmationDialog(
 fun TaskFormScreen(
     modifier: Modifier = Modifier,
     isEditMode: Boolean = false,
-    onBackClick: () -> Unit = { }
+    initialTask: TaskItemUi? = null,
+    onBackClick: () -> Unit = { },
+    onSaveTask: (TaskItemUi) -> Unit = { }
 ) {
     val darkNavy = Color(0xFF0D0D5C)
     val headerGray = Color(0xFF424242)
     val purpleAccent = Color(0xFF6552A3)
     val backgroundColor = Color(0xFFF8F9FA)
 
-    // Form Field Values depending on Mode
-    val titleValue = if (isEditMode) "Finish Jetpack Compose UI" else ""
-    val subjectValue = if (isEditMode) "Programming" else ""
-    val dueDateValue = if (isEditMode) "May 24, 2025" else ""
-    val selectedPriority = if (isEditMode) "High" else "Medium"
-    val notesValue = if (isEditMode) "Complete the home and task screens." else ""
-    val charCount = if (isEditMode) "${notesValue.length}/200" else "0/200"
+    // Interactive Form Field States initialized from initialTask
+    var titleText by remember(initialTask, isEditMode) {
+        mutableStateOf(initialTask?.title ?: if (isEditMode) "Finish Jetpack Compose UI" else "")
+    }
+    var subjectText by remember(initialTask, isEditMode) {
+        mutableStateOf(initialTask?.subject ?: if (isEditMode) "Programming" else "Mathematics")
+    }
+    var dueDateText by remember(initialTask, isEditMode) {
+        mutableStateOf(initialTask?.dueDate ?: if (isEditMode) "May 24, 2025" else "May 28, 2025")
+    }
+    var selectedPriority by remember(initialTask, isEditMode) {
+        mutableStateOf(initialTask?.priority ?: if (isEditMode) "High" else "Medium")
+    }
+    var notesText by remember(initialTask, isEditMode) {
+        mutableStateOf(if (isEditMode) "Complete the home and task screens." else "")
+    }
 
+    var isSubjectDropdownExpanded by remember { mutableStateOf(false) }
+    val subjectsList = listOf("Mathematics", "Science", "English", "Programming")
+
+    val charCount = "${notesText.length}/200"
     val screenTitle = if (isEditMode) "Edit Task" else "Add Task"
 
     Scaffold(
@@ -247,8 +271,8 @@ fun TaskFormScreen(
             // 1. Task Title
             FormLabel(text = "Task Title *")
             OutlinedTextField(
-                value = titleValue,
-                onValueChange = { },
+                value = titleText,
+                onValueChange = { titleText = it },
                 placeholder = { Text("Enter task title", color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
@@ -263,38 +287,59 @@ fun TaskFormScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2. Subject Dropdown Style Field
+            // 2. Subject Dropdown Field
             FormLabel(text = "Subject *")
-            OutlinedTextField(
-                value = subjectValue,
-                onValueChange = { },
-                placeholder = { Text("Select subject", color = Color.Gray) },
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Select subject",
-                        tint = darkNavy
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color(0xFFD1C4E9),
-                    focusedBorderColor = purpleAccent,
-                    unfocusedContainerColor = Color.White,
-                    focusedContainerColor = Color.White
-                ),
-                readOnly = true,
-                singleLine = true
-            )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = subjectText,
+                    onValueChange = { },
+                    placeholder = { Text("Select subject", color = Color.Gray) },
+                    trailingIcon = {
+                        IconButton(onClick = { isSubjectDropdownExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Select subject",
+                                tint = darkNavy
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isSubjectDropdownExpanded = true },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFD1C4E9),
+                        focusedBorderColor = purpleAccent,
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
+                    ),
+                    readOnly = true,
+                    singleLine = true
+                )
+
+                DropdownMenu(
+                    expanded = isSubjectDropdownExpanded,
+                    onDismissRequest = { isSubjectDropdownExpanded = false }
+                ) {
+                    subjectsList.forEach { subj ->
+                        DropdownMenuItem(
+                            text = { Text(subj) },
+                            onClick = {
+                                subjectText = subj
+                                isSubjectDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 3. Due Date Field (Text only)
+            // 3. Due Date Field (Text input)
             FormLabel(text = "Due Date *")
             OutlinedTextField(
-                value = dueDateValue,
-                onValueChange = { },
+                value = dueDateText,
+                onValueChange = { dueDateText = it },
                 placeholder = { Text("Enter due date (e.g. May 24, 2025)", color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
@@ -311,15 +356,18 @@ fun TaskFormScreen(
 
             // 4. Priority Chips Row
             FormLabel(text = "Priority *")
-            PrioritySelector(selectedPriority = selectedPriority)
+            PrioritySelector(
+                selectedPriority = selectedPriority,
+                onPrioritySelected = { selectedPriority = it }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // 5. Notes (optional)
             FormLabel(text = "Notes (optional)")
             OutlinedTextField(
-                value = notesValue,
-                onValueChange = { },
+                value = notesText,
+                onValueChange = { notesText = it },
                 placeholder = { Text("Add notes...", color = Color.Gray) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -345,7 +393,17 @@ fun TaskFormScreen(
 
             // 6. Save Task Button
             Button(
-                onClick = { },
+                onClick = {
+                    val updatedTask = TaskItemUi(
+                        title = titleText.ifBlank { "Task" },
+                        subject = subjectText.ifBlank { "Mathematics" },
+                        dueDate = dueDateText.ifBlank { "May 28, 2025" },
+                        priority = selectedPriority,
+                        isCompleted = initialTask?.isCompleted ?: false
+                    )
+                    onSaveTask(updatedTask)
+                    onBackClick()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -366,7 +424,7 @@ fun TaskFormScreen(
             if (isEditMode) {
                 Spacer(modifier = Modifier.height(12.dp))
                 OutlinedButton(
-                    onClick = { },
+                    onClick = onBackClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

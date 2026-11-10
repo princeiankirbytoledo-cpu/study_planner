@@ -18,12 +18,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.FindInPage
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -196,8 +200,12 @@ fun TaskCard(
  * Reusable Empty Tasks State Composable
  */
 @Composable
-fun EmptyTasksState(modifier: Modifier = Modifier) {
+fun EmptyTasksState(
+    modifier: Modifier = Modifier,
+    onAddTaskClick: () -> Unit = { }
+) {
     val darkNavy = Color(0xFF0D0D5C)
+    val buttonGreen = Color(0xFF2E7D32)
 
     Column(
         modifier = modifier
@@ -232,6 +240,31 @@ fun EmptyTasksState(modifier: Modifier = Modifier) {
             fontSize = 14.sp,
             color = Color.Gray
         )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = onAddTaskClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .padding(horizontal = 20.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = buttonGreen
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add Task",
+                tint = Color.White
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Add Task",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -242,22 +275,16 @@ fun EmptyTasksState(modifier: Modifier = Modifier) {
 @Composable
 fun TaskListScreen(
     modifier: Modifier = Modifier,
+    tasks: List<TaskItemUi> = emptyList(),
     onMoreClick: () -> Unit = { },
-    onTaskClick: () -> Unit = { }
+    onTaskClick: (TaskItemUi) -> Unit = { },
+    onBackClick: () -> Unit = { }
 ) {
     val darkNavy = Color(0xFF0D0D5C)
     val headerGray = Color(0xFF424242)
     val purpleAccent = Color(0xFF6552A3)
+    val buttonGreen = Color(0xFF2E7D32)
     val backgroundColor = Color(0xFFF8F9FA)
-
-    // Hardcoded sample tasks data
-    val sampleTasks = listOf(
-        TaskItemUi("Finish Jetpack Compose UI", "Programming", "May 24, 2025", "High", false),
-        TaskItemUi("Review IT Ethics", "IT Ethics", "May 25, 2025", "High", false),
-        TaskItemUi("Complete Project Proposal", "Programming", "May 28, 2025", "Medium", false),
-        TaskItemUi("Read Chapter 3", "Mathematics", "May 20, 2025", "Low", true),
-        TaskItemUi("Watch Science Lecture", "Science", "May 18, 2025", "Low", true)
-    )
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -293,18 +320,20 @@ fun TaskListScreen(
                         )
                     }
                 },
-                actions = {
-                    IconButton(onClick = { }) {
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
                             tint = Color.White
                         )
                     }
+                },
+                actions = {
                     IconButton(onClick = onMoreClick) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More Options",
+                            contentDescription = "Add Task",
                             tint = Color.White
                         )
                     }
@@ -315,108 +344,147 @@ fun TaskListScreen(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(vertical = 12.dp)
-        ) {
-            // Search Field
-            item {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = { },
-                    placeholder = {
-                        Text(
-                            text = "Search tasks by title...",
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search Icon",
-                            tint = Color.Gray
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFD1C4E9),
-                        focusedBorderColor = purpleAccent,
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White
-                    ),
-                    singleLine = true
-                )
+        if (tasks.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                EmptyTasksState(onAddTaskClick = onMoreClick)
             }
-
-            // Filter Chips Row
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
-                ) {
-                    FilterChip(
-                        selected = true,
-                        onClick = { },
-                        label = { Text("All", fontWeight = FontWeight.Bold) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = purpleAccent,
-                            selectedLabelColor = Color.White
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
+                // Search Field
+                item {
+                    OutlinedTextField(
+                        value = "",
+                        onValueChange = { },
+                        placeholder = {
+                            Text(
+                                text = "Search tasks by title...",
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search Icon",
+                                tint = Color.Gray
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color(0xFFD1C4E9),
+                            focusedBorderColor = purpleAccent,
+                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Color.White
                         ),
-                        border = null,
-                        shape = RoundedCornerShape(20.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    FilterChip(
-                        selected = false,
-                        onClick = { },
-                        label = { Text("Pending") },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color(0xFFF3E5F5),
-                            labelColor = darkNavy
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            borderColor = Color(0xFFE1BEE7),
-                            enabled = true,
-                            selected = false
-                        ),
-                        shape = RoundedCornerShape(20.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    FilterChip(
-                        selected = false,
-                        onClick = { },
-                        label = { Text("Completed") },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color(0xFFF3E5F5),
-                            labelColor = darkNavy
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            borderColor = Color(0xFFE1BEE7),
-                            enabled = true,
-                            selected = false
-                        ),
-                        shape = RoundedCornerShape(20.dp)
+                        singleLine = true
                     )
                 }
-            }
 
-            // Task Cards List
-            items(sampleTasks) { task ->
-                TaskCard(
-                    task = task,
-                    onClick = onTaskClick
-                )
+                // Filter Chips Row
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp)
+                    ) {
+                        FilterChip(
+                            selected = true,
+                            onClick = { },
+                            label = { Text("All", fontWeight = FontWeight.Bold) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = purpleAccent,
+                                selectedLabelColor = Color.White
+                            ),
+                            border = null,
+                            shape = RoundedCornerShape(20.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        FilterChip(
+                            selected = false,
+                            onClick = { },
+                            label = { Text("Pending") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = Color(0xFFF3E5F5),
+                                labelColor = darkNavy
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                borderColor = Color(0xFFE1BEE7),
+                                enabled = true,
+                                selected = false
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        FilterChip(
+                            selected = false,
+                            onClick = { },
+                            label = { Text("Completed") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = Color(0xFFF3E5F5),
+                                labelColor = darkNavy
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                borderColor = Color(0xFFE1BEE7),
+                                enabled = true,
+                                selected = false
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                    }
+                }
+
+                // Task Cards List
+                items(tasks) { task ->
+                    TaskCard(
+                        task = task,
+                        onClick = { onTaskClick(task) }
+                    )
+                }
+
+                // Add Task Button at bottom of list
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onMoreClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(horizontal = 20.dp),
+                        shape = RoundedCornerShape(28.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = buttonGreen
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Task",
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Add Task",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }
@@ -425,7 +493,11 @@ fun TaskListScreen(
 @Preview(showBackground = true)
 @Composable
 fun TaskListScreenPreview() {
-    TaskListScreen()
+    TaskListScreen(
+        tasks = listOf(
+            TaskItemUi("Finish Jetpack Compose UI", "Programming", "May 24, 2025", "High", false)
+        )
+    )
 }
 
 @Preview(showBackground = true)
