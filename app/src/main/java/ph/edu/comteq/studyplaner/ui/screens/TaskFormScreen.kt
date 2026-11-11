@@ -202,6 +202,7 @@ fun TaskFormScreen(
     modifier: Modifier = Modifier,
     isEditMode: Boolean = false,
     initialTask: TaskItemUi? = null,
+    defaultSubject: String? = null,
     onBackClick: () -> Unit = { },
     onSaveTask: (TaskItemUi) -> Unit = { }
 ) {
@@ -210,12 +211,17 @@ fun TaskFormScreen(
     val purpleAccent = Color(0xFF6552A3)
     val backgroundColor = Color(0xFFF8F9FA)
 
-    // Interactive Form Field States initialized from initialTask
+    // Interactive Form Field States initialized from initialTask or defaultSubject
     var titleText by remember(initialTask, isEditMode) {
         mutableStateOf(initialTask?.title ?: if (isEditMode) "Finish Jetpack Compose UI" else "")
     }
-    var subjectText by remember(initialTask, isEditMode) {
-        mutableStateOf(initialTask?.subject ?: if (isEditMode) "Programming" else "Mathematics")
+    var subjectText by remember(initialTask, defaultSubject, isEditMode) {
+        mutableStateOf(
+            initialTask?.subject
+                ?: if (!defaultSubject.isNullOrBlank()) defaultSubject
+                else if (isEditMode) "Programming"
+                else "Mathematics"
+        )
     }
     var dueDateText by remember(initialTask, isEditMode) {
         mutableStateOf(initialTask?.dueDate ?: if (isEditMode) "May 24, 2025" else "May 28, 2025")

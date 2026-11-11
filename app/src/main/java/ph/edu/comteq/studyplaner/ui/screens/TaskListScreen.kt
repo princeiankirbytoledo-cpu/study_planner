@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.FindInPage
 import androidx.compose.material.icons.filled.MoreVert
@@ -181,17 +180,6 @@ fun TaskCard(
                     PriorityPill(priority = task.priority)
                 }
             }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Bookmark Button
-            IconButton(onClick = { }) {
-                Icon(
-                    imageVector = Icons.Default.BookmarkBorder,
-                    contentDescription = "Bookmark",
-                    tint = purpleAccent
-                )
-            }
         }
     }
 }
@@ -202,10 +190,13 @@ fun TaskCard(
 @Composable
 fun EmptyTasksState(
     modifier: Modifier = Modifier,
+    subjectFilter: String? = null,
     onAddTaskClick: () -> Unit = { }
 ) {
     val darkNavy = Color(0xFF0D0D5C)
     val buttonGreen = Color(0xFF2E7D32)
+
+    val titleText = if (!subjectFilter.isNullOrBlank()) "No tasks for $subjectFilter" else "No tasks found"
 
     Column(
         modifier = modifier
@@ -229,7 +220,7 @@ fun EmptyTasksState(
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "No tasks found",
+            text = titleText,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = darkNavy
@@ -276,6 +267,7 @@ fun EmptyTasksState(
 fun TaskListScreen(
     modifier: Modifier = Modifier,
     tasks: List<TaskItemUi> = emptyList(),
+    selectedSubjectFilter: String? = null,
     onMoreClick: () -> Unit = { },
     onTaskClick: (TaskItemUi) -> Unit = { },
     onBackClick: () -> Unit = { }
@@ -285,6 +277,19 @@ fun TaskListScreen(
     val purpleAccent = Color(0xFF6552A3)
     val buttonGreen = Color(0xFF2E7D32)
     val backgroundColor = Color(0xFFF8F9FA)
+
+    // Filter tasks by selected subject if active
+    val displayedTasks = if (!selectedSubjectFilter.isNullOrBlank()) {
+        tasks.filter { it.subject.equals(selectedSubjectFilter, ignoreCase = true) }
+    } else {
+        tasks
+    }
+
+    val pageTitle = if (!selectedSubjectFilter.isNullOrBlank()) {
+        "$selectedSubjectFilter Tasks"
+    } else {
+        "Study Planner"
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -313,7 +318,7 @@ fun TaskListScreen(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Study Planner",
+                            text = pageTitle,
                             color = Color.White,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
@@ -344,13 +349,16 @@ fun TaskListScreen(
             )
         }
     ) { innerPadding ->
-        if (tasks.isEmpty()) {
+        if (displayedTasks.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                EmptyTasksState(onAddTaskClick = onMoreClick)
+                EmptyTasksState(
+                    subjectFilter = selectedSubjectFilter,
+                    onAddTaskClick = onMoreClick
+                )
             }
         } else {
             LazyColumn(
@@ -450,7 +458,7 @@ fun TaskListScreen(
                 }
 
                 // Task Cards List
-                items(tasks) { task ->
+                items(displayedTasks) { task ->
                     TaskCard(
                         task = task,
                         onClick = { onTaskClick(task) }

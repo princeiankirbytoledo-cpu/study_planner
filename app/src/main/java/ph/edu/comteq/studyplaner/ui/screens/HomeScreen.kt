@@ -19,14 +19,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Science
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,13 +69,11 @@ data class HomeSubjectItem(
 @Composable
 fun HomeScreen(
     tasks: List<TaskItemUi> = emptyList(),
-    onAddSubjectClick: () -> Unit = { },
     onSubjectClick: (String) -> Unit = { }
 ) {
     val context = LocalContext.current
     val darkNavy = Color(0xFF0D0D5C)
     val headerGray = Color(0xFF424242)
-    val buttonGreen = Color(0xFF2E7D32)
     val backgroundColor = Color(0xFFF8F9FA)
 
     // Dynamic Greeting Function based on time of day
@@ -189,35 +184,6 @@ fun HomeScreen(
                         onSubjectClick(subject.name)
                     }
                 )
-            }
-
-            // Add Subject Button
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = onAddSubjectClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .padding(horizontal = 20.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = buttonGreen
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Subject",
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Add Subject",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             }
         }
     }

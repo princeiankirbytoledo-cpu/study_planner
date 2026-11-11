@@ -30,6 +30,7 @@ fun AppNavigation() {
     // Shared Tasks State across screens
     val tasksList = remember { mutableStateListOf<TaskItemUi>() }
     var selectedTaskToEdit by remember { mutableStateOf<TaskItemUi?>(null) }
+    var activeSubjectFilter by remember { mutableStateOf<String?>(null) }
 
     val topLevelRoutes = listOf(Routes.HOME, Routes.TASKS, Routes.SUBJECTS)
     val showBottomBar = currentRoute in topLevelRoutes
@@ -40,6 +41,9 @@ fun AppNavigation() {
                 AppBottomBar(
                     currentRoute = currentRoute,
                     onItemClick = { route ->
+                        if (route == Routes.TASKS) {
+                            activeSubjectFilter = null
+                        }
                         navController.navigate(route) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
@@ -60,13 +64,16 @@ fun AppNavigation() {
             composable(Routes.HOME) {
                 HomeScreen(
                     tasks = tasksList,
-                    onAddSubjectClick = { navController.navigate(Routes.ADD_SUBJECT) },
-                    onSubjectClick = { navController.navigate(Routes.TASKS) }
+                    onSubjectClick = { subjectName ->
+                        activeSubjectFilter = subjectName
+                        navController.navigate(Routes.TASKS)
+                    }
                 )
             }
             composable(Routes.TASKS) {
                 TaskListScreen(
                     tasks = tasksList,
+                    selectedSubjectFilter = activeSubjectFilter,
                     onMoreClick = {
                         selectedTaskToEdit = null
                         navController.navigate(Routes.ADD_TASK)
@@ -75,7 +82,10 @@ fun AppNavigation() {
                         selectedTaskToEdit = task
                         navController.navigate(Routes.EDIT_TASK)
                     },
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = {
+                        activeSubjectFilter = null
+                        navController.popBackStack()
+                    }
                 )
             }
             composable(Routes.SUBJECTS) {
@@ -85,6 +95,7 @@ fun AppNavigation() {
                 TaskFormScreen(
                     isEditMode = false,
                     initialTask = null,
+                    defaultSubject = activeSubjectFilter,
                     onBackClick = { navController.popBackStack() },
                     onSaveTask = { newTask ->
                         tasksList.add(newTask)
@@ -95,6 +106,7 @@ fun AppNavigation() {
                 TaskFormScreen(
                     isEditMode = true,
                     initialTask = selectedTaskToEdit,
+                    defaultSubject = activeSubjectFilter,
                     onBackClick = { navController.popBackStack() },
                     onSaveTask = { updatedTask ->
                         selectedTaskToEdit?.let { oldTask ->
